@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/6170928e-fda2-4c24-99e1-c135b8e0b6dd/resourceGroups/TestDB/providers/Microsoft.Web/sites/convertyoutubeportal",
+    "appService.deploySubpath": "."
+}
