@@ -11,3 +11,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.rhap_container {
+  background-color: rgb(65, 52, 52) !important;
+}
+
+.rhap_time {
+  color: white !important;
+}
