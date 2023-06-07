@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import AudioPlayer from "react-h5-audio-player";
 import "react-h5-audio-player/lib/styles.css";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
 
 function App() {
   const [url, setUrl] = useState("");
@@ -101,12 +103,19 @@ function App() {
           style={{
             display: "flex",
             justifyContent: "center",
-            marginTop: "20px",
-            color: "white"
+            color: "white",
+            height: "50px",
+            width: "50vw",
+            margin: "20px auto 0",
+            gap: "2rem",
+            alignItems: "center",
           }}
         >
-          {isConverting && <p>Đang chuyển đổi...</p>}
-          {progress > 0 && <p>Tiến trình tải xuống: {progress}%</p>}
+          <div style={{ width: "4rem" }}>
+            {progress > 0 && (
+              <CircularProgressbar value={progress} text={`${progress}%`} styles={buildStyles({ pathTransition: "none" })}/>
+            )}
+          </div>
         </div>
       )}
     </div>
