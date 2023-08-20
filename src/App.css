@@ -130,10 +130,6 @@
   }
 }
 
-.card__favorite:last-child {
-  margin-bottom: 130px;
-}
-
 .card > div:first-child {
   cursor: pointer;
 }
@@ -144,4 +140,19 @@
 
 .card__selected .card__image__trash {
   filter: none !important;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.audio__player {
+  animation: slideUp 1s forwards;
 }

@@ -10,6 +10,9 @@ import Loading from "./Loading.tsx";
 import heart from "./assets/img/heart.png";
 import music_disc from "./assets/img/music_disc.png";
 import trash from "./assets/img/trash.png";
+import trash_white from "./assets/img/trash_white.png";
+import heart_white from "./assets/img/heart_white.png";
+import heart_select from "./assets/img/heart_select.png";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -45,7 +48,7 @@ function App() {
         })
         .catch(() => {
           setProgress(0);
-          setError("Lỗi khi chuyển đổi URL");
+          alert("Lỗi khi chuyển đổi URL");
         })
         .finally(() => {
           setIsLoading(false);
@@ -74,28 +77,32 @@ function App() {
     }
   }, [playAudio]);
 
-  const addToPlayList = (url) => {
+  const addToPlayList = (video) => {
+    const videoId = video.id.value ?? video.id;
+    if (playList.find((x) => x.id === videoId))
+      return alert("đã có trong danh sách");
+    const newPlayList = [
+      ...playList,
+      {
+        url: video.url,
+        title: video.title,
+        author: video.author,
+        id: video.id.value ?? video.id,
+        duration: video.duration,
+        thumbnail: video.thumbnail,
+      },
+    ];
+    localStorage.setItem("playList", JSON.stringify(newPlayList));
+    setPlayList(newPlayList);
+  };
+
+  const handleAddToPlayList = (url) => {
     setError("");
     const response = axios
       .get(`${apiUrl}/youTubeToMP3/info?videoUrl=${url}`)
       .then((response) => {
         var audioInfo = response.data;
-
-        if (playList.find((x) => x.id === audioInfo.id.value))
-          return alert("đã có trong danh sách");
-        const newPlayList = [
-          ...playList,
-          {
-            url: audioInfo.url,
-            title: audioInfo.title,
-            author: audioInfo.author,
-            id: audioInfo.id.value,
-            duration: audioInfo.duration,
-            thumbnail: audioInfo.thumbnail,
-          },
-        ];
-        localStorage.setItem("playList", JSON.stringify(newPlayList));
-        setPlayList(newPlayList);
+        addToPlayList(audioInfo);
       })
       .catch((error) => {
         alert(error.response.data);
@@ -106,7 +113,7 @@ function App() {
     setError("");
     setIsLoading(true);
     const response = axios
-      .get(`${apiUrl}/youTubeToMP3/search?value=${url}`)
+      .get(`${apiUrl}/youTubeToMP3/search?value=${url}&size=20`)
       .then((response) => {
         var videos = response.data;
         setVideos(
@@ -172,20 +179,36 @@ function App() {
             alignItems: "center",
             justifyContent: "center",
             gap: "15px",
+            flexWrap: "wrap",
           }}
         >
           <ReactAutocomplete
             items={recommends}
+            wrapperStyle={{
+              minWidth: "40%",
+            }}
+            menuStyle={{
+              borderRadius: "3px",
+              boxShadow: "0 2px 12px rgba(0, 0, 0, 0.1)",
+              background: "rgba(255, 255, 255, 0.9)",
+              padding: "2px 0",
+              fontSize: "90%",
+              position: "fixed",
+              overflow: "auto",
+              maxHeight: "50%", // TODO: don't cheat, let it flow to the bottom
+              display: recommends.length === 0 ? "none" : "",
+            }}
             renderInput={(props) => (
               <input
                 style={{
                   width: "100%",
-                  lineHeight: "20px",
-                  fontSize: "20px",
-                  backgroundColor: "rgb(79 79 79 / 60%)",
+                  lineHeight: "24px",
+                  fontSize: "15px",
+                  backgroundColor: "#110f0fb0",
                   color: "white",
                 }}
                 type="search"
+                placeholder="Nhập URL của video YouTube hoặc từ để tìm kiếm"
                 {...props}
               />
             )}
@@ -199,8 +222,8 @@ function App() {
                   key={item}
                   style={{
                     backgroundColor: highlighted
-                      ? "rgb(79 79 79 / 60%)"
-                      : "black",
+                      ? "#9d9d9d"
+                      : "#110f0fe6",
                     cursor: "pointer",
                     color: "white",
                     padding: "10px",
@@ -220,13 +243,6 @@ function App() {
               search(value);
             }}
           />
-          {/* <input
-            type="text"
-            value={url}
-            onChange={(e) => handleChangeInput(e)}
-            style={{ padding: "5px", width: "40%" }}
-            placeholder="Nhập URL của video YouTube hoặc từ để tìm kiếm"
-          /> */}
           <button
             ref={convertRef}
             onClick={() => handleConvertVideo(url)}
@@ -243,7 +259,7 @@ function App() {
             {isConverting ? "Đang chuyển đổi..." : "Chuyển đổi"}
           </button>
           <button
-            onClick={() => addToPlayList(url)}
+            onClick={() => handleAddToPlayList(url)}
             style={{
               padding: "5px 10px",
               color: "#FFF",
@@ -278,12 +294,14 @@ function App() {
               position: "fixed",
               width: "100%",
               bottom: "0",
+              zIndex: "2",
             }}
           >
             <AudioPlayer
               style={{
                 width: "100%",
               }}
+              className="audio__player"
               header={
                 <span
                   style={{
@@ -298,11 +316,12 @@ function App() {
               autoPlay
               src={audioUrl}
               onPlay={(e) => console.log("onPlay")}
+              showDownloadProgress
               // other props here
             />
           </div>
         )}
-        {(progress > 0 && progress < 100) && (
+        {progress > 0 && progress < 100 && (
           <div
             style={{
               display: "flex",
@@ -362,12 +381,22 @@ function App() {
                     <img src={music_disc} alt="" className="card__disc" />
                   )}
                   <img
-                    src={heart}
+                    src={
+                      playList.find((x) => x.id === video.id)
+                        ? heart_select
+                        : selectVideo === video
+                        ? heart
+                        : heart_white
+                    }
                     alt=""
                     height={20}
                     width={20}
                     style={{ cursor: "pointer" }}
-                    onClick={() => addToPlayList(video.url)}
+                    onClick={() => {
+                      playList.find((x) => x.id === video.id)
+                        ? handleRemoveItem(video.id)
+                        : addToPlayList(video);
+                    }}
                   />
                   {video.duration}
                 </div>
@@ -388,10 +417,13 @@ function App() {
           Danh sách yêu thích
         </div>
       )}
-      <div className="cards">
+      <div
+        className="cards"
+        style={{ marginBottom: audioUrl ? "130px" : "30px" }}
+      >
         {playList.length > 0 &&
           playList.map((video, index) => (
-            <div key={index} className="card card__favorite">
+            <div key={index} className="card">
               <div onClick={() => handleSelectVideo(video)}>
                 <img className="card__image" src={video.thumbnail} alt="" />
                 <div
@@ -420,7 +452,7 @@ function App() {
                     <img src={music_disc} alt="" className="card__disc" />
                   )}
                   <img
-                    src={trash}
+                    src={selectVideo === video ? trash : trash_white}
                     alt=""
                     width={20}
                     height={20}
