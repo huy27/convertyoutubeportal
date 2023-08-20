@@ -35,8 +35,14 @@
   box-sizing: border-box;
 }
 
-.card__selected {
-  background-color: aquamarine !important;
+.card__content.card__selected {
+  background-color: #686b75 !important;
+  color: black !important;
+}
+
+.card__info.card__selected {
+      background-color: #9d9d9d !important;
+    color: black !important;
 }
 
 .card__image {
@@ -53,7 +59,8 @@
   line-height: 1.5;
   font-size: 0.9em;
   padding: 15px;
-  background: #fafafa;
+  background: #110f0fe6;
+  color: white;
   border-right: 2px solid #333333;
   border-left: 2px solid #333333;
   height: 85px;
@@ -74,8 +81,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #555555;
-  background: #eeeeee;
+  color: white;
+  background: #110f0fb0;
   font-size: 0.8em;
   border-bottom: 2px solid #333333;
   border-right: 2px solid #333333;
@@ -123,10 +130,18 @@
   }
 }
 
-.card:last-child {
-  margin-bottom: 100px;
+.card__favorite:last-child {
+  margin-bottom: 130px;
 }
 
 .card > div:first-child {
   cursor: pointer;
+}
+
+/* .card__image__trash {
+  filter: invert(1);
+} */
+
+.card__selected .card__image__trash {
+  filter: none !important;
 }

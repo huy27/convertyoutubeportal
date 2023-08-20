@@ -1,11 +1,15 @@
+import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import axios, { HttpStatusCode } from "axios";
-import AudioPlayer from "react-h5-audio-player";
-import "react-h5-audio-player/lib/styles.css";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import AudioPlayer from "react-h5-audio-player";
+import ReactAutocomplete from "react-autocomplete";
+import "react-h5-audio-player/lib/styles.css";
 import "./App.css";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Loading from "./Loading.tsx";
+import heart from "./assets/img/heart.png";
+import music_disc from "./assets/img/music_disc.png";
+import trash from "./assets/img/trash.png";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -20,33 +24,40 @@ function App() {
   const [playAudio, setPlayAudio] = useState("");
   const [videos, setVideos] = useState([]);
   const [selectVideo, setSelectVideo] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommends, setRecommends] = useState(["huy"]);
 
-  const convertToMP3 = async () => {
+  const convertToMP3 = async (url) => {
     try {
+      setIsLoading(true);
       setIsConverting(true);
       setError("");
       setProgress(0);
-      setAudioUrl("");
-      const response = await axios.get(`${apiUrl}/youTubeToMP3?url=${url}`, {
-        responseType: "blob",
-        onDownloadProgress: (progressEvent) => {
-          const percentage = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setProgress(percentage);
-        },
-      });
-
-      setIsConverting(false);
+      const response = await axios
+        .get(`${apiUrl}/youTubeToMP3?url=${url}`, {
+          responseType: "blob",
+          onDownloadProgress: (progressEvent) => {
+            const percentage = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setProgress(percentage);
+          },
+        })
+        .catch(() => {
+          setProgress(0);
+          setError("Lỗi khi chuyển đổi URL");
+        })
+        .finally(() => {
+          setIsLoading(false);
+          setIsConverting(false);
+        });
 
       const audioBlob = new Blob([response.data], { type: "audio/mpeg" });
       const audioUrl = URL.createObjectURL(audioBlob);
 
       setAudioUrl(audioUrl);
     } catch (error) {
-      setIsConverting(false);
-      setError("Lỗi khi chuyển đổi URL");
-      setAudioUrl("");
+      console.log(error);
     }
   };
 
@@ -59,11 +70,12 @@ function App() {
 
   useEffect(() => {
     if (playAudio) {
-      convertToMP3();
+      convertToMP3(playAudio);
     }
   }, [playAudio]);
 
-  const addToPlayList = () => {
+  const addToPlayList = (url) => {
+    setError("");
     const response = axios
       .get(`${apiUrl}/youTubeToMP3/info?videoUrl=${url}`)
       .then((response) => {
@@ -90,12 +102,13 @@ function App() {
       });
   };
 
-  const search = () => {
+  const search = (url) => {
+    setError("");
+    setIsLoading(true);
     const response = axios
       .get(`${apiUrl}/youTubeToMP3/search?value=${url}`)
       .then((response) => {
         var videos = response.data;
-        console.log(videos);
         setVideos(
           videos.map((item) => ({
             url: item.url,
@@ -109,7 +122,8 @@ function App() {
       })
       .catch((error) => {
         alert(error.response.data);
-      });
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const handleRemoveItem = (id) => {
@@ -119,13 +133,34 @@ function App() {
   };
 
   const handleSelectVideo = (video) => {
-    setUrl(video.url);
     setPlayAudio(video.url);
     setSelectVideo(video);
   };
 
+  const handleConvertVideo = (url) => {
+    setPlayAudio(url);
+    setSelectVideo("");
+  };
+
+  const handleChangeInput = (e) => {
+    // eslint-disable-next-line no-undef
+    $.ajax({
+      url: `https://suggestqueries.google.com/complete/search?hl=en&ds=yt&client=youtube&hjson=t&cp=1&q=${e.target.value}`,
+      dataType: "jsonp",
+      success: (data) => {
+        setRecommends(data[1].map((x) => x[0]));
+      },
+      error: (error) => {
+        console.error(error);
+      },
+    });
+    setUrl(e.target.value);
+  };
+
   return (
     <>
+      {isLoading && <Loading></Loading>}
+
       <div
         style={{
           padding: "20px 0",
@@ -139,16 +174,62 @@ function App() {
             gap: "15px",
           }}
         >
-          <input
+          <ReactAutocomplete
+            items={recommends}
+            renderInput={(props) => (
+              <input
+                style={{
+                  width: "100%",
+                  lineHeight: "20px",
+                  fontSize: "20px",
+                  backgroundColor: "rgb(79 79 79 / 60%)",
+                  color: "white",
+                }}
+                type="search"
+                {...props}
+              />
+            )}
+            shouldItemRender={(item, value) =>
+              item.toLowerCase().indexOf(value.toLowerCase()) > -1
+            }
+            getItemValue={(item) => item}
+            renderItem={(item, highlighted) => {
+              return (
+                <div
+                  key={item}
+                  style={{
+                    backgroundColor: highlighted
+                      ? "rgb(79 79 79 / 60%)"
+                      : "black",
+                    cursor: "pointer",
+                    color: "white",
+                    padding: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    zIndex: "900",
+                  }}
+                >
+                  {item}
+                </div>
+              );
+            }}
+            value={url}
+            onChange={(e) => handleChangeInput(e)}
+            onSelect={(value) => {
+              setUrl(value);
+              search(value);
+            }}
+          />
+          {/* <input
             type="text"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => handleChangeInput(e)}
             style={{ padding: "5px", width: "40%" }}
             placeholder="Nhập URL của video YouTube hoặc từ để tìm kiếm"
-          />
+          /> */}
           <button
             ref={convertRef}
-            onClick={convertToMP3}
+            onClick={() => handleConvertVideo(url)}
             disabled={isConverting}
             style={{
               padding: "5px 10px",
@@ -162,7 +243,7 @@ function App() {
             {isConverting ? "Đang chuyển đổi..." : "Chuyển đổi"}
           </button>
           <button
-            onClick={addToPlayList}
+            onClick={() => addToPlayList(url)}
             style={{
               padding: "5px 10px",
               color: "#FFF",
@@ -174,7 +255,7 @@ function App() {
             Thêm vào list nhạc
           </button>
           <button
-            onClick={search}
+            onClick={() => search(url)}
             style={{
               padding: "5px 10px",
               color: "#FFF",
@@ -187,7 +268,7 @@ function App() {
           </button>
         </div>
         {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
-        {audioUrl ? (
+        {audioUrl && (
           <div
             style={{
               display: "flex",
@@ -203,6 +284,15 @@ function App() {
               style={{
                 width: "100%",
               }}
+              header={
+                <span
+                  style={{
+                    color: "white",
+                  }}
+                >
+                  {selectVideo && selectVideo.title}
+                </span>
+              }
               volume="0.5"
               loop
               autoPlay
@@ -211,33 +301,33 @@ function App() {
               // other props here
             />
           </div>
-        ) : (
-          progress > 0 && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                color: "white",
-                height: "50px",
-                position: "fixed",
-                width: "100%",
-                bottom: "13px",
-                margin: "20px auto 0",
-                gap: "2rem",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ width: "4rem" }}>
-                <CircularProgressbar
-                  background
-                  value={progress}
-                  text={`${progress}%`}
-                  styles={buildStyles({ pathTransition: "none" })}
-                />
-              </div>
-            </div>
-          )
         )}
+        {(progress > 0 && progress < 100) && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              color: "white",
+              height: "50px",
+              position: "fixed",
+              width: "100%",
+              bottom: "39%",
+              margin: "20px auto 0",
+              gap: "2rem",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "4rem" }}>
+              <CircularProgressbar
+                background
+                value={progress}
+                text={`${progress}%`}
+                styles={buildStyles({ pathTransition: "none" })}
+              />
+            </div>
+          </div>
+        )}
+        )
       </div>
 
       <div className="cards">
@@ -269,12 +359,16 @@ function App() {
                   }}
                 >
                   {selectVideo === video && (
-                    <img
-                      src="https://static.vecteezy.com/system/resources/previews/009/393/830/original/black-vinyl-disc-record-for-music-album-cover-design-free-png.png"
-                      alt=""
-                      className="card__disc"
-                    />
+                    <img src={music_disc} alt="" className="card__disc" />
                   )}
+                  <img
+                    src={heart}
+                    alt=""
+                    height={20}
+                    width={20}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => addToPlayList(video.url)}
+                  />
                   {video.duration}
                 </div>
                 <div className="card__author">{video.author}</div>
@@ -297,7 +391,7 @@ function App() {
       <div className="cards">
         {playList.length > 0 &&
           playList.map((video, index) => (
-            <div key={index} className="card">
+            <div key={index} className="card card__favorite">
               <div onClick={() => handleSelectVideo(video)}>
                 <img className="card__image" src={video.thumbnail} alt="" />
                 <div
@@ -323,20 +417,17 @@ function App() {
                   }}
                 >
                   {selectVideo === video && (
-                    <img
-                      src="https://static.vecteezy.com/system/resources/previews/009/393/830/original/black-vinyl-disc-record-for-music-album-cover-design-free-png.png"
-                      alt=""
-                      className="card__disc"
-                    />
+                    <img src={music_disc} alt="" className="card__disc" />
                   )}
                   <img
-                    src="https://spng.pngfind.com/pngs/s/57-578431_trash-can-clipart-general-waste-trash-bin-icon.png"
+                    src={trash}
                     alt=""
                     width={20}
                     height={20}
                     style={{
                       cursor: "pointer",
                     }}
+                    className="card__image__trash"
                     onClick={() => handleRemoveItem(video.id)}
                   />
                   {video.duration}
