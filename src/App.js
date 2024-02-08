@@ -422,7 +422,7 @@ function App() {
         style={{ marginBottom: audioUrl ? "130px" : "30px" }}
       >
         {playList.length > 0 &&
-          playList.map((video, index) => (
+          [...playList].reverse().map((video, index) => (
             <div key={index} className="card">
               <div onClick={() => handleSelectVideo(video)}>
                 <img className="card__image" src={video.thumbnail} alt="" />
