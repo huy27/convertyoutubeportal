@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import AudioPlayer from "react-h5-audio-player";
+import AudioPlayer, { RHAP_UI } from "react-h5-audio-player";
 import ReactAutocomplete from "react-autocomplete";
 import "react-h5-audio-player/lib/styles.css";
 import "./App.css";
@@ -13,6 +13,7 @@ import trash from "./assets/img/trash.png";
 import trash_white from "./assets/img/trash_white.png";
 import heart_white from "./assets/img/heart_white.png";
 import heart_select from "./assets/img/heart_select.png";
+import play_speed from "./assets/img/mdi--play-speed.svg";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -29,6 +30,7 @@ function App() {
   const [selectVideo, setSelectVideo] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [recommends, setRecommends] = useState(["huy"]);
+  const [speed, setSpeed] = useState(1);
 
   const convertToMP3 = async (url) => {
     try {
@@ -53,6 +55,7 @@ function App() {
         .finally(() => {
           setIsLoading(false);
           setIsConverting(false);
+          setSpeed(1);
         });
 
       const audioBlob = new Blob([response.data], { type: "audio/mpeg" });
@@ -63,6 +66,22 @@ function App() {
       console.log(error);
     }
   };
+
+  const handleSpeed = () => {
+    setSpeed((prev) => {
+      const newSpeed = parseFloat(prev) + 0.1;
+      return newSpeed > 2 ? 1 : newSpeed.toFixed(1);
+    });
+  };
+
+  useEffect(() => {
+    const audioPlayer = document.querySelector(
+      "div[aria-label='Audio player'] audio"
+    );
+    if (audioPlayer) {
+      audioPlayer.playbackRate = speed;
+    }
+  }, [speed]);
 
   useEffect(() => {
     if (localStorage.getItem("playList")) {
@@ -221,9 +240,7 @@ function App() {
                 <div
                   key={item}
                   style={{
-                    backgroundColor: highlighted
-                      ? "#9d9d9d"
-                      : "#110f0fe6",
+                    backgroundColor: highlighted ? "#9d9d9d" : "#110f0fe6",
                     cursor: "pointer",
                     color: "white",
                     padding: "10px",
@@ -317,10 +334,17 @@ function App() {
               src={audioUrl}
               onPlay={(e) => console.log("onPlay")}
               showDownloadProgress
+              customVolumeControls={[
+                RHAP_UI.VOLUME,
+                <>
+                  &nbsp;&nbsp;<img style={{cursor: "pointer"}} onClick={handleSpeed} src={play_speed}></img>{speed}
+                </>,
+              ]}
               // other props here
             />
           </div>
         )}
+
         {progress > 0 && progress < 100 && (
           <div
             style={{
