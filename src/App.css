@@ -1,25 +1,29 @@
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
 #table-wrapper {
-  position:relative;
+  position: relative;
 }
 #table-scroll {
-  height:450px;
-  overflow:auto;  
-  margin-top:20px;
+  height: 450px;
+  overflow: auto;
+  margin-top: 20px;
 }
 #table-wrapper table {
-  width:100%;
-
+  width: 100%;
 }
 #table-wrapper table * {
-  color:black;
+  color: black;
 }
 #table-wrapper table thead th .text {
-  position:absolute;   
-  top:-20px;
-  z-index:2;
-  height:20px;
-  width:35%;
-  border:1px solid red;
+  position: absolute;
+  top: -20px;
+  z-index: 2;
+  height: 20px;
+  width: 35%;
+  border: 1px solid red;
 }
 
 .cards {
@@ -41,8 +45,8 @@
 }
 
 .card__info.card__selected {
-      background-color: #9d9d9d !important;
-    color: black !important;
+  background-color: #9d9d9d !important;
+  color: black !important;
 }
 
 .card__image {
@@ -155,4 +159,49 @@
 
 .audio__player {
   animation: slideUp 1s forwards;
+}
+
+.dropbtn {
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  overflow: auto;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  bottom: 25px;
+  max-height: 100px;
+  min-width: 45px;
+}
+
+.dropdown-content div {
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content div:hover {
+  background-color: #aeacac;
+}
+
+.dropdown-content .selected {
+  background-color: #aeacac;
+}
+
+.show {
+  display: block;
+}
+
+.rhap_additional-controls {
+  flex: 1 0;
 }

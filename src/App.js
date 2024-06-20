@@ -14,6 +14,7 @@ import trash_white from "./assets/img/trash_white.png";
 import heart_white from "./assets/img/heart_white.png";
 import heart_select from "./assets/img/heart_select.png";
 import play_speed from "./assets/img/mdi--play-speed.svg";
+import download_icon from "./assets/img/material-symbols--download.svg";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -31,6 +32,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [recommends, setRecommends] = useState(["huy"]);
   const [speed, setSpeed] = useState(1);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const convertToMP3 = async (url) => {
     try {
@@ -67,11 +69,14 @@ function App() {
     }
   };
 
-  const handleSpeed = () => {
-    setSpeed((prev) => {
-      const newSpeed = parseFloat(prev) + 0.1;
-      return newSpeed > 2 ? 1 : newSpeed.toFixed(1);
-    });
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleClickOutside = (event) => {
+    if (!event.target.matches(".dropbtn img")) {
+      setDropdownOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -95,6 +100,13 @@ function App() {
       convertToMP3(playAudio);
     }
   }, [playAudio]);
+
+  useEffect(() => {
+    window.addEventListener("click", handleClickOutside);
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
 
   const addToPlayList = (video) => {
     const videoId = video.id.value ?? video.id;
@@ -181,6 +193,30 @@ function App() {
       },
     });
     setUrl(e.target.value);
+  };
+
+  const renderDropdownItems = () => {
+    const items = [];
+    for (let i = 1; i <= 2.1; i += 0.1) {
+      const tmp = i.toFixed(1);
+      items.push(
+        <div
+          className={speed == tmp ? "selected" : ""}
+          onClick={() => setSpeed(tmp)}
+          key={tmp}
+        >
+          {tmp}
+        </div>
+      );
+    }
+    return items;
+  };
+
+  const handleDownload = () => {
+    const tempLink = document.createElement("a");
+    tempLink.href = audioUrl;
+    tempLink.setAttribute("download", `${selectVideo.title}.mp3`);
+    tempLink.click();
   };
 
   return (
@@ -325,7 +361,7 @@ function App() {
                     color: "white",
                   }}
                 >
-                  {selectVideo && selectVideo.title}
+                  {selectVideo && `${selectVideo.title} (speed: ${speed})`}
                 </span>
               }
               volume="0.5"
@@ -334,17 +370,35 @@ function App() {
               src={audioUrl}
               onPlay={(e) => console.log("onPlay")}
               showDownloadProgress
-              customVolumeControls={[
-                RHAP_UI.VOLUME,
+              customAdditionalControls={[
+                RHAP_UI.LOOP,
                 <>
-                  &nbsp;&nbsp;<img style={{cursor: "pointer"}} onClick={handleSpeed} src={play_speed}></img>{speed}
+                  &nbsp;
+                  <div className="dropdown">
+                    <div onClick={toggleDropdown} className="dropbtn">
+                      <img src={play_speed}></img>
+                    </div>
+                    <div
+                      id="myDropdown"
+                      className={`dropdown-content ${
+                        dropdownOpen ? "show" : ""
+                      }`}
+                    >
+                      {renderDropdownItems()}
+                    </div>
+                  </div>
+                  &nbsp;
+                  <img
+                    style={{ cursor: "pointer" }}
+                    onClick={handleDownload}
+                    src={download_icon}
+                  ></img>
                 </>,
               ]}
               // other props here
             />
           </div>
         )}
-
         {progress > 0 && progress < 100 && (
           <div
             style={{
