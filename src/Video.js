@@ -108,8 +108,14 @@ const Video = () => {
               marginTop: "65px",
             }}
           >
-            <video width={500} key={response.data.videoDetail.dlink} controls>
-              <source src={response.data.videoDetail.dlink} type="video/mp4" />
+            <video
+              autoPlay
+              loop
+              width={500}
+              key={response.data.videoDetail.dlink}
+              controls
+            >
+              <source src={decodeURIComponent(response.data.videoDetail.dlink)} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>
